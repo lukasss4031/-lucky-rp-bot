@@ -43,8 +43,5 @@ module.exports = {
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });
-
-    const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);
-    if (logChannel) logChannel.send({ embeds: [embed] }).catch(() => {});
   },
 };
