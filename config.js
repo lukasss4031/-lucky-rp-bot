@@ -1,43 +1,3 @@
-module.exports = {
-  moderationRoleId: ["1550950817496825867", "1550985124043034726", "1550950740862828574"],
-
-  vorschlagReviewRoleId: "1550985124043034726",
-
-  vorschlagChannelId: "1551004481292996758",
-
-  fragenChannelId: "1550950516723294228",
-
-  supportWarteraumChannelId: "1550954146398732368",
-  supportPingChannelId: "1551295071461310554",
-  supportPingRoleId: ["1550950817496825867", "1550985124043034726"],
-
-  ticketCategoryId: "1550963611751551026",
-  ticketPanelChannelId: "1550953951514333235",
-
-  bewerbungPanelChannelId: "1550984458000273430",
-  bewerbungReviewChannelId: "1550985400762245160",
-  bewerbungAkzeptiertChannelId: "1550985826366922752",
-  bewerbungAbgelehntChannelId: "1550985901390172241",
-
-  statusChannels: {
-    playersChannelId: "1551271960904867950",
-    botsChannelId: "1551272085794463894",
-    boostsChannelId: "1551272666432938094",
-  },
-
-  teamLogChannelId: "1551001576662110308",
-
-  rankLadder: [
-    "1550947160231645255",
-    "1550947142808375377",
-    "1550947126039805952",
-    "1550947109451206766",
-    "1550947039867568169",
-    "1550946983081021440",
-    "1550946937610698782",
-    "1550946912352469054",
-  ],
-
   faq: [
     {
       keywords: ["join", "beitreten", "wie komme ich", "server ip", "wie betrete"],
@@ -57,8 +17,10 @@ module.exports = {
     {
       keywords: ["ticket", "support", "hilfe brauche"],
       answer: "Für individuelle Hilfe öffne bitte ein Ticket über den Ticket-Kanal, dort wählst du die passende Kategorie aus.",
-      keywords: ["Hallo", "Helfen", "Hilfe,
+    },
+    {
+      keywords: ["hallo", "helfen", "hilfe"],
       answer: "Hallo, wie kann ich dir heute weiterhelfen?",
-},
+    },
   ],
 };
