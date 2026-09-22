@@ -1,8 +1,11 @@
 const Database = require("better-sqlite3");
 const path = require("path");
 
-// Die Datei bot.sqlite wird automatisch angelegt und speichert alle Daten dauerhaft.
-const db = new Database(path.join(__dirname, "..", "bot.sqlite"));
+// Nutzt einen dauerhaften Speicherort (Railway Volume), falls vorhanden.
+// Railway setzt RAILWAY_VOLUME_MOUNT_PATH automatisch, sobald ein Volume angehängt ist.
+// Ohne Volume wird lokal gespeichert (Achtung: geht dann bei jedem Neustart verloren!).
+const dbDir = process.env.RAILWAY_VOLUME_MOUNT_PATH || path.join(__dirname, "..");
+const db = new Database(path.join(dbDir, "bot.sqlite"));
 db.pragma("journal_mode = WAL");
 
 db.exec(`
