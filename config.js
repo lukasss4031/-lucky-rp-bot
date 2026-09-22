@@ -57,6 +57,8 @@ module.exports = {
     {
       keywords: ["ticket", "support", "hilfe brauche"],
       answer: "Für individuelle Hilfe öffne bitte ein Ticket über den Ticket-Kanal, dort wählst du die passende Kategorie aus.",
-    },
+      keywords: ["Hallo", "Helfen", "Hilfe,
+      answer: "Hallo, wie kann ich dir heute weiterhelfen?",
+},
   ],
 };
