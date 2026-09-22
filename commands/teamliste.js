@@ -1,48 +1,64 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const db = require("../db/database");
 const config = require("../config");
+
+// Ordnet der Rollenfarbe einen passenden Farb-Punkt-Emoji zu, für eine schönere Optik.
+function farbPunkt(hexColor) {
+  if (!hexColor || hexColor === "#000000") return "⚪";
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
+
+  if (r > 200 && g < 100 && b < 100) return "🔴";
+  if (r > 200 && g > 100 && g < 200 && b < 100) return "🟠";
+  if (r > 200 && g > 200 && b < 100) return "🟡";
+  if (g > 150 && r < 150 && b < 150) return "🟢";
+  if (b > 150 && r < 150 && g < 150) return "🔵";
+  if (r > 100 && b > 150 && g < 100) return "🟣";
+  return "⚪";
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("teamliste")
-    .setDescription("Zeigt alle aktuellen Teammitglieder an."),
+    .setDescription("Zeigt alle Rangstufen des Teams an, inklusive unbesetzter Ränge."),
 
   async execute(interaction) {
     await interaction.deferReply();
-
-    // Teamliste wird live aus den Servern-Mitgliedern gebildet:
-    // Alle, die mindestens die unterste Rang-Rolle aus der rankLadder haben.
     await interaction.guild.members.fetch();
-    const rankRoles = config.rankLadder.filter((id) => id && !id.startsWith("DEIN") && !id.startsWith("PROBEZEIT_"));
 
-    const teamMembers = interaction.guild.members.cache.filter((m) =>
-      config.rankLadder.some((roleId) => m.roles.cache.has(roleId))
-    );
+    // Höchster Rang zuerst
+    const ladderHoechsteZuerst = [...config.rankLadder].reverse();
 
-    if (teamMembers.size === 0) {
+    const zeilen = ladderHoechsteZuerst
+      .map((roleId) => {
+        const role = interaction.guild.roles.cache.get(roleId);
+        if (!role) return null;
+
+        const mitglieder = interaction.guild.members.cache.filter((m) => {
+          const hoechsterIndex = config.rankLadder.findIndex((id) => m.roles.cache.has(id));
+          return hoechsterIndex !== -1 && config.rankLadder[hoechsterIndex] === roleId;
+        });
+
+        const punkt = farbPunkt(role.hexColor);
+        const namen =
+          mitglieder.size > 0
+            ? [...mitglieder.values()].map((m) => `> <@${m.id}>`).join("\n")
+            : "> *Niemand*";
+
+        return `${punkt} **${role.name}**\n${namen}`;
+      })
+      .filter(Boolean);
+
+    if (zeilen.length === 0) {
       return interaction.editReply(
-        "Aktuell ist niemand im Team gelistet (oder die Rollen-IDs in config.js sind noch nicht eingetragen)."
+        "Keine Ränge gefunden — bitte prüfe, ob die Rollen-IDs in `rankLadder` in `config.js` korrekt sind."
       );
     }
 
-    // Höchster Rang zuerst
-    const sorted = [...teamMembers.values()].sort((a, b) => {
-      const rankA = config.rankLadder.findIndex((id) => a.roles.cache.has(id));
-      const rankB = config.rankLadder.findIndex((id) => b.roles.cache.has(id));
-      return rankB - rankA;
-    });
-
-    const lines = sorted.map((m) => {
-      const rankIndex = config.rankLadder.findIndex((id) => m.roles.cache.has(id));
-      const rolle = rankIndex >= 0 ? m.guild.roles.cache.get(config.rankLadder[rankIndex]) : null;
-      return `**${m.user.username}** — ${rolle ? rolle.name : "Team"}`;
-    });
-
     const embed = new EmbedBuilder()
-      .setTitle("📋 Teamliste — Lucky RP")
-      .setDescription(lines.join("\n"))
+      .setTitle(`📋 Teamliste — ${interaction.guild.name}`)
+      .setDescription(zeilen.join("\n\n"))
       .setColor(0x3498db)
-      .setFooter({ text: `${sorted.length} Teammitglieder` })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });
