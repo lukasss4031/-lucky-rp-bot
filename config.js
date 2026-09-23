@@ -1,4 +1,4 @@
-  // =========================================================================
+// =========================================================================
 // KONFIGURATION - Hier trägst du deine eigenen IDs ein.
 // IDs bekommst du per Rechtsklick auf Server/Kanal/Rolle -> "ID kopieren"
 // (Discord-Einstellungen -> Erweitert -> Entwicklermodus muss aktiviert sein)

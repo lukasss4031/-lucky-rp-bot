@@ -1,10 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const db = require("../db/database");
 const { hasAnyRole } = require("../utils/hasRole");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 function parseDauer(text) {
-  // z.B. "10m", "2h", "1d"
   const match = text.match(/^(\d+)(m|h|d)$/i);
   if (!match) return null;
   const amount = parseInt(match[1], 10);
@@ -18,14 +18,12 @@ module.exports = {
     .setName("giveaway-start")
     .setDescription("Startet ein Giveaway.")
     .addStringOption((o) => o.setName("preis").setDescription("Was wird verlost?").setRequired(true))
-    .addStringOption((o) =>
-      o.setName("dauer").setDescription("z.B. 10m, 2h, 1d").setRequired(true)
-    )
+    .addStringOption((o) => o.setName("dauer").setDescription("z.B. 10m, 2h, 1d").setRequired(true))
     .addIntegerOption((o) => o.setName("gewinner").setDescription("Anzahl Gewinner").setRequired(true)),
 
   async execute(interaction) {
     if (!hasAnyRole(interaction.member, config.moderationRoleId)) {
-      return interaction.reply({ content: "Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
+      return interaction.reply({ content: "❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
     }
 
     const preis = interaction.options.getString("preis");
@@ -35,18 +33,19 @@ module.exports = {
 
     if (!dauerMs) {
       return interaction.reply({
-        content: "Ungültiges Dauer-Format. Nutze z.B. `10m`, `2h` oder `1d`.",
+        content: "❌ Ungültiges Dauer-Format. Nutze z.B. `10m`, `2h` oder `1d`.",
         ephemeral: true,
       });
     }
 
     const endsAt = Date.now() + dauerMs;
 
-    const embed = new EmbedBuilder()
-      .setTitle("🎉 Giveaway 🎉")
-      .setDescription(`**Preis:** ${preis}\n**Gewinner:** ${gewinner}\n**Endet:** <t:${Math.floor(endsAt / 1000)}:R>\n\nKlicke auf den Button, um teilzunehmen!`)
-      .setColor(0xf1c40f)
-      .setFooter({ text: "Gehostet von " + interaction.user.username });
+    const embed = baseEmbed(interaction.guild, {
+      title: "🎉 Giveaway 🎉",
+      color: FARBEN.gold,
+      description: `**🎁 Preis:** ${preis}\n**🏆 Gewinner:** ${gewinner}\n**⏰ Endet:** <t:${Math.floor(endsAt / 1000)}:R>\n\nKlicke auf den Button, um teilzunehmen!`,
+      fields: [{ name: "Gehostet von", value: `<@${interaction.user.id}>` }],
+    });
 
     const button = new ButtonBuilder()
       .setCustomId("giveaway_join")

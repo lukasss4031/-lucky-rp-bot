@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 const { hasAnyRole } = require("../utils/hasRole");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 module.exports = {
@@ -10,7 +11,7 @@ module.exports = {
 
   async execute(interaction) {
     if (!hasAnyRole(interaction.member, config.moderationRoleId)) {
-      return interaction.reply({ content: "Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
+      return interaction.reply({ content: "❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
     }
 
     const target = await interaction.guild.members.fetch(interaction.options.getUser("user").id);
@@ -31,16 +32,17 @@ module.exports = {
     await target.roles.remove(oldRoleId).catch(() => null);
     await target.roles.add(newRoleId).catch(() => null);
 
-    const embed = new EmbedBuilder()
-      .setTitle("⬇️ Downrank")
-      .setColor(0xe74c3c)
-      .setDescription(
-        `${target} wurde von **${interaction.guild.roles.cache.get(oldRoleId)?.name ?? oldRoleId}** zu **${
-          interaction.guild.roles.cache.get(newRoleId)?.name ?? newRoleId
-        }** runtergestuft.`
-      )
-      .addFields({ name: "Durchgeführt von", value: `<@${interaction.user.id}>` })
-      .setTimestamp();
+    const embed = baseEmbed(interaction.guild, {
+      title: "⬇️ Downrank",
+      color: FARBEN.fehler,
+      thumbnail: target.displayAvatarURL(),
+      description: `${target} wurde runtergestuft.`,
+      fields: [
+        { name: "Von", value: interaction.guild.roles.cache.get(oldRoleId)?.name ?? oldRoleId, inline: true },
+        { name: "Zu", value: interaction.guild.roles.cache.get(newRoleId)?.name ?? newRoleId, inline: true },
+        { name: "Durchgeführt von", value: `<@${interaction.user.id}>` },
+      ],
+    });
 
     await interaction.reply({ embeds: [embed] });
     const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);

@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 const db = require("../db/database");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 function formatDauer(ms) {
@@ -26,16 +27,17 @@ module.exports = {
         .get(userId);
 
       if (laufend) {
-        return interaction.reply({ content: "Du hast bereits eine laufende Shift.", ephemeral: true });
+        return interaction.reply({ content: "⚠️ Du hast bereits eine laufende Shift.", ephemeral: true });
       }
 
       db.prepare("INSERT INTO shifts (userId, startedAt) VALUES (?, ?)").run(userId, Date.now());
 
-      const embed = new EmbedBuilder()
-        .setTitle("🟢 Shift gestartet")
-        .setDescription(`<@${userId}> hat seine Shift gestartet.`)
-        .setColor(0x2ecc71)
-        .setTimestamp();
+      const embed = baseEmbed(interaction.guild, {
+        title: "🟢 Shift gestartet",
+        color: FARBEN.erfolg,
+        thumbnail: interaction.user.displayAvatarURL(),
+        description: `<@${userId}> hat seine Shift gestartet.`,
+      });
 
       await interaction.reply({ embeds: [embed] });
       const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);
@@ -48,17 +50,19 @@ module.exports = {
         .get(userId);
 
       if (!laufend) {
-        return interaction.reply({ content: "Du hast aktuell keine laufende Shift.", ephemeral: true });
+        return interaction.reply({ content: "⚠️ Du hast aktuell keine laufende Shift.", ephemeral: true });
       }
 
       const endedAt = Date.now();
       db.prepare("UPDATE shifts SET endedAt = ? WHERE id = ?").run(endedAt, laufend.id);
 
-      const embed = new EmbedBuilder()
-        .setTitle("🔴 Shift beendet")
-        .setDescription(`<@${userId}> hat seine Shift beendet.\nDauer: **${formatDauer(endedAt - laufend.startedAt)}**`)
-        .setColor(0xe74c3c)
-        .setTimestamp();
+      const embed = baseEmbed(interaction.guild, {
+        title: "🔴 Shift beendet",
+        color: FARBEN.fehler,
+        thumbnail: interaction.user.displayAvatarURL(),
+        description: `<@${userId}> hat seine Shift beendet.`,
+        fields: [{ name: "⏱️ Dauer", value: formatDauer(endedAt - laufend.startedAt) }],
+      });
 
       await interaction.reply({ embeds: [embed] });
       const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);

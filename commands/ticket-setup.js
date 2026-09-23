@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require("discord.js");
 const { hasAnyRole } = require("../utils/hasRole");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 module.exports = {
@@ -9,13 +10,14 @@ module.exports = {
 
   async execute(interaction) {
     if (!hasAnyRole(interaction.member, config.moderationRoleId)) {
-      return interaction.reply({ content: "Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
+      return interaction.reply({ content: "❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle("🎫 Support-Tickets")
-      .setDescription("Wähle unten eine Kategorie aus, um ein Ticket zu erstellen.")
-      .setColor(0x3498db);
+    const embed = baseEmbed(interaction.guild, {
+      title: "🎫 Support-Tickets",
+      color: FARBEN.info,
+      description: "Wähle unten eine Kategorie aus, um ein Ticket zu erstellen.",
+    });
 
     const menu = new StringSelectMenuBuilder()
       .setCustomId("ticket_category_select")
@@ -29,6 +31,6 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(menu);
     await interaction.channel.send({ embeds: [embed], components: [row] });
-    await interaction.reply({ content: "Ticket-Panel wurde gepostet.", ephemeral: true });
+    await interaction.reply({ content: "✅ Ticket-Panel wurde gepostet.", ephemeral: true });
   },
 };

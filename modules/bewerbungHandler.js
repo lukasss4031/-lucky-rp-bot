@@ -9,6 +9,7 @@ const {
 } = require("discord.js");
 const db = require("../db/database");
 const { hasAnyRole } = require("../utils/hasRole");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 function buildModal() {
@@ -50,32 +51,33 @@ async function handleSubmit(interaction) {
     .prepare("INSERT INTO applications (userId, answers, createdAt) VALUES (?, ?, ?)")
     .run(interaction.user.id, answers, Date.now());
 
-  const embed = new EmbedBuilder()
-    .setTitle("📝 Neue Bewerbung (Pending)")
-    .setColor(0xf1c40f)
-    .addFields(
-      { name: "Bewerber", value: `<@${interaction.user.id}>` },
-      { name: "Alter", value: alter },
-      { name: "Team-Erfahrung", value: erfahrung },
-      { name: "Motivation", value: motivation }
-    )
-    .setFooter({ text: `Bewerbung #${result.lastInsertRowid}` })
-    .setTimestamp();
+  const embed = baseEmbed(interaction.guild, {
+    title: "📝 Neue Bewerbung",
+    color: FARBEN.gold,
+    thumbnail: interaction.user.displayAvatarURL(),
+    fields: [
+      { name: "👤 Bewerber", value: `<@${interaction.user.id}>` },
+      { name: "🎂 Alter", value: alter, inline: true },
+      { name: "📌 Status", value: "Pending", inline: true },
+      { name: "💼 Team-Erfahrung", value: erfahrung },
+      { name: "💬 Motivation", value: motivation },
+    ],
+  }).setFooter({ text: `Bewerbung #${result.lastInsertRowid}` });
 
   const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`bewerbung_accept_${result.lastInsertRowid}`).setLabel("Annehmen").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`bewerbung_reject_${result.lastInsertRowid}`).setLabel("Ablehnen").setStyle(ButtonStyle.Danger)
+    new ButtonBuilder().setCustomId(`bewerbung_accept_${result.lastInsertRowid}`).setLabel("Annehmen").setStyle(ButtonStyle.Success).setEmoji("✅"),
+    new ButtonBuilder().setCustomId(`bewerbung_reject_${result.lastInsertRowid}`).setLabel("Ablehnen").setStyle(ButtonStyle.Danger).setEmoji("❌")
   );
 
   const reviewChannel = interaction.guild.channels.cache.get(config.bewerbungReviewChannelId);
   if (reviewChannel) await reviewChannel.send({ embeds: [embed], components: [row] });
 
-  await interaction.reply({ content: "Deine Bewerbung wurde eingereicht und wird geprüft. Status: **Pending**.", ephemeral: true });
+  await interaction.reply({ content: "✅ Deine Bewerbung wurde eingereicht und wird geprüft. Status: **Pending**.", ephemeral: true });
 }
 
 async function handleDecision(interaction, decision, applicationId) {
   if (!hasAnyRole(interaction.member, config.moderationRoleId)) {
-    return interaction.reply({ content: "Du hast keine Berechtigung dafür.", ephemeral: true });
+    return interaction.reply({ content: "❌ Du hast keine Berechtigung dafür.", ephemeral: true });
   }
 
   const application = db.prepare("SELECT * FROM applications WHERE id = ?").get(applicationId);
@@ -89,7 +91,7 @@ async function handleDecision(interaction, decision, applicationId) {
 
   const embed = EmbedBuilder.from(interaction.message.embeds[0])
     .setTitle(decision === "accept" ? "✅ Bewerbung angenommen" : "❌ Bewerbung abgelehnt")
-    .setColor(decision === "accept" ? 0x2ecc71 : 0xe74c3c);
+    .setColor(decision === "accept" ? FARBEN.erfolg : FARBEN.fehler);
 
   if (targetChannel) await targetChannel.send({ embeds: [embed] });
 

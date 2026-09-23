@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 const db = require("../db/database");
 const { hasAnyRole } = require("../utils/hasRole");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 module.exports = {
@@ -14,7 +15,7 @@ module.exports = {
 
   async execute(interaction) {
     if (!hasAnyRole(interaction.member, config.moderationRoleId)) {
-      return interaction.reply({ content: "Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
+      return interaction.reply({ content: "❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
     }
 
     const robloxUsername = interaction.options.getString("roblox_username");
@@ -28,19 +29,16 @@ module.exports = {
       .prepare("SELECT COUNT(*) AS c FROM warns WHERE userId = ? AND type = 'roblox'")
       .get(robloxUsername).c;
 
-    const embed = new EmbedBuilder()
-      .setTitle("🟥 Roblox-Verwarnung eingetragen")
-      .setColor(0xc0392b)
-      .addFields(
-        { name: "Roblox-Nutzer", value: robloxUsername, inline: true },
-        { name: "Moderator", value: `<@${interaction.user.id}>`, inline: true },
-        { name: "Grund", value: grund },
-        { name: "Verwarnungen gesamt (Roblox)", value: `${count}`, inline: true }
-      )
-      .setFooter({
-        text: "Hinweis: Damit dies automatisch im Roblox-Spiel ankommt, muss dein Roblox-Spiel den Webhook des Bots abrufen (siehe README).",
-      })
-      .setTimestamp();
+    const embed = baseEmbed(interaction.guild, {
+      title: "🟥 Roblox-Verwarnung eingetragen",
+      color: FARBEN.fehler,
+      fields: [
+        { name: "🎮 Roblox-Nutzer", value: robloxUsername, inline: true },
+        { name: "🛡️ Moderator", value: `<@${interaction.user.id}>`, inline: true },
+        { name: "🔢 Verwarnungen gesamt", value: `${count}`, inline: true },
+        { name: "📝 Grund", value: grund },
+      ],
+    });
 
     await interaction.reply({ embeds: [embed] });
   },

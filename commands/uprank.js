@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 const { hasAnyRole } = require("../utils/hasRole");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 module.exports = {
@@ -10,7 +11,7 @@ module.exports = {
 
   async execute(interaction) {
     if (!hasAnyRole(interaction.member, config.moderationRoleId)) {
-      return interaction.reply({ content: "Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
+      return interaction.reply({ content: "❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
     }
 
     const target = await interaction.guild.members.fetch(interaction.options.getUser("user").id);
@@ -19,7 +20,6 @@ module.exports = {
     const currentIndex = ladder.findIndex((roleId) => target.roles.cache.has(roleId));
 
     if (currentIndex === -1) {
-      // Noch kein Rang -> unterste Rolle geben
       await target.roles.add(ladder[0]).catch(() => null);
       return interaction.reply(`${target} wurde in den Rang **${interaction.guild.roles.cache.get(ladder[0])?.name ?? ladder[0]}** eingestuft.`);
     }
@@ -34,16 +34,17 @@ module.exports = {
     await target.roles.remove(oldRoleId).catch(() => null);
     await target.roles.add(newRoleId).catch(() => null);
 
-    const embed = new EmbedBuilder()
-      .setTitle("⬆️ Uprank")
-      .setColor(0x2ecc71)
-      .setDescription(
-        `${target} wurde von **${interaction.guild.roles.cache.get(oldRoleId)?.name ?? oldRoleId}** zu **${
-          interaction.guild.roles.cache.get(newRoleId)?.name ?? newRoleId
-        }** hochgestuft.`
-      )
-      .addFields({ name: "Durchgeführt von", value: `<@${interaction.user.id}>` })
-      .setTimestamp();
+    const embed = baseEmbed(interaction.guild, {
+      title: "⬆️ Uprank",
+      color: FARBEN.erfolg,
+      thumbnail: target.displayAvatarURL(),
+      description: `${target} wurde hochgestuft.`,
+      fields: [
+        { name: "Von", value: interaction.guild.roles.cache.get(oldRoleId)?.name ?? oldRoleId, inline: true },
+        { name: "Zu", value: interaction.guild.roles.cache.get(newRoleId)?.name ?? newRoleId, inline: true },
+        { name: "Durchgeführt von", value: `<@${interaction.user.id}>` },
+      ],
+    });
 
     await interaction.reply({ embeds: [embed] });
     const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);

@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 const db = require("../db/database");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 module.exports = {
@@ -15,11 +16,12 @@ module.exports = {
       db.prepare("UPDATE shifts SET endedAt = ? WHERE id = ?").run(Date.now(), laufend.id);
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle("👋 Abgemeldet")
-      .setDescription(`<@${userId}> hat sich vom Dienst abgemeldet.`)
-      .setColor(0x95a5a6)
-      .setTimestamp();
+    const embed = baseEmbed(interaction.guild, {
+      title: "👋 Abgemeldet",
+      color: FARBEN.info,
+      thumbnail: interaction.user.displayAvatarURL(),
+      description: `<@${userId}> hat sich vom Dienst abgemeldet.`,
+    });
 
     await interaction.reply({ embeds: [embed] });
     const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);

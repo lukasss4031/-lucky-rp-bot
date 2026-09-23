@@ -1,5 +1,6 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, ChannelType } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, ChannelType } = require("discord.js");
 const db = require("../db/database");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 const kategorieNamen = {
@@ -17,7 +18,7 @@ async function createTicket(interaction, category) {
 
   if (existing) {
     return interaction.reply({
-      content: `Du hast bereits ein offenes Ticket dieser Kategorie: <#${existing.channelId}>`,
+      content: `⚠️ Du hast bereits ein offenes Ticket dieser Kategorie: <#${existing.channelId}>`,
       ephemeral: true,
     });
   }
@@ -43,19 +44,21 @@ async function createTicket(interaction, category) {
   );
 
   const closeButton = new ButtonBuilder().setCustomId("ticket_close").setLabel("Ticket schließen").setStyle(ButtonStyle.Danger).setEmoji("🔒");
-  const embed = new EmbedBuilder()
-    .setTitle(`🎫 Ticket — ${kategorieNamen[category] ?? category}`)
-    .setDescription(`Hallo <@${interaction.user.id}>, das Team kümmert sich in Kürze um dein Anliegen.\nSchreib hier einfach, worum es geht.`)
-    .setColor(0x3498db);
+  const embed = baseEmbed(guild, {
+    title: `🎫 Ticket — ${kategorieNamen[category] ?? category}`,
+    color: FARBEN.info,
+    thumbnail: interaction.user.displayAvatarURL(),
+    description: `Hallo <@${interaction.user.id}>, das Team kümmert sich in Kürze um dein Anliegen.\nSchreib hier einfach, worum es geht.`,
+  });
 
   await channel.send({ embeds: [embed], components: [new ActionRowBuilder().addComponents(closeButton)] });
-  await interaction.reply({ content: `Dein Ticket wurde erstellt: ${channel}`, ephemeral: true });
+  await interaction.reply({ content: `✅ Dein Ticket wurde erstellt: ${channel}`, ephemeral: true });
 }
 
 async function closeTicket(interaction) {
   const ticket = db.prepare("SELECT * FROM tickets WHERE channelId = ? AND status = 'open'").get(interaction.channel.id);
   if (!ticket) {
-    return interaction.reply({ content: "Dies ist kein offenes Ticket.", ephemeral: true });
+    return interaction.reply({ content: "⚠️ Dies ist kein offenes Ticket.", ephemeral: true });
   }
 
   db.prepare("UPDATE tickets SET status = 'closed' WHERE id = ?").run(ticket.id);

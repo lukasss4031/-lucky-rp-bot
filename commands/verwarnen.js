@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require("discord.js");
+const { SlashCommandBuilder } = require("discord.js");
 const db = require("../db/database");
 const { hasAnyRole } = require("../utils/hasRole");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 module.exports = {
@@ -12,7 +13,7 @@ module.exports = {
 
   async execute(interaction) {
     if (!hasAnyRole(interaction.member, config.moderationRoleId)) {
-      return interaction.reply({ content: "Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
+      return interaction.reply({ content: "❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral: true });
     }
 
     const target = interaction.options.getUser("user");
@@ -24,16 +25,17 @@ module.exports = {
 
     const count = db.prepare("SELECT COUNT(*) AS c FROM warns WHERE userId = ? AND type = 'discord'").get(target.id).c;
 
-    const embed = new EmbedBuilder()
-      .setTitle("⚠️ Verwarnung eingetragen")
-      .setColor(0xe67e22)
-      .addFields(
-        { name: "Nutzer", value: `<@${target.id}>`, inline: true },
-        { name: "Moderator", value: `<@${interaction.user.id}>`, inline: true },
-        { name: "Grund", value: grund },
-        { name: "Verwarnungen gesamt", value: `${count}`, inline: true }
-      )
-      .setTimestamp();
+    const embed = baseEmbed(interaction.guild, {
+      title: "⚠️ Verwarnung eingetragen",
+      color: FARBEN.warnung,
+      thumbnail: target.displayAvatarURL(),
+      fields: [
+        { name: "👤 Nutzer", value: `<@${target.id}>`, inline: true },
+        { name: "🛡️ Moderator", value: `<@${interaction.user.id}>`, inline: true },
+        { name: "🔢 Verwarnungen gesamt", value: `${count}`, inline: true },
+        { name: "📝 Grund", value: grund },
+      ],
+    });
 
     await interaction.reply({ embeds: [embed] });
 

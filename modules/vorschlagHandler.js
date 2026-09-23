@@ -1,5 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const db = require("../db/database");
+const { hasAnyRole } = require("../utils/hasRole");
+const { baseEmbed, FARBEN } = require("../utils/embeds");
 const config = require("../config");
 
 async function handleSubmit(interaction) {
@@ -9,14 +11,17 @@ async function handleSubmit(interaction) {
     .prepare("INSERT INTO suggestions (userId, content, createdAt) VALUES (?, ?, ?)")
     .run(interaction.user.id, text, Date.now());
 
-  const embed = new EmbedBuilder()
-    .setTitle("💡 Neuer Vorschlag")
-    .setDescription(text)
-    .setColor(0x3498db)
+  const embed = baseEmbed(interaction.guild, {
+    title: "💡 Neuer Vorschlag",
+    color: FARBEN.info,
+    description: text,
+    fields: [
+      { name: "👍 Dafür", value: "0", inline: true },
+      { name: "👎 Dagegen", value: "0", inline: true },
+    ],
+  })
     .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() })
-    .addFields({ name: "👍 Dafür", value: "0", inline: true }, { name: "👎 Dagegen", value: "0", inline: true })
-    .setFooter({ text: `Vorschlag #${result.lastInsertRowid} — Status: Ausstehend` })
-    .setTimestamp();
+    .setFooter({ text: `Vorschlag #${result.lastInsertRowid} — Status: Ausstehend` });
 
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId(`vorschlag_up_${result.lastInsertRowid}`).setLabel("👍").setStyle(ButtonStyle.Secondary),
@@ -33,7 +38,7 @@ async function handleSubmit(interaction) {
   const message = await channel.send({ embeds: [embed], components: [row] });
   db.prepare("UPDATE suggestions SET messageId = ? WHERE id = ?").run(message.id, result.lastInsertRowid);
 
-  await interaction.reply({ content: "Danke, dein Vorschlag wurde eingereicht!", ephemeral: true });
+  await interaction.reply({ content: "✅ Danke, dein Vorschlag wurde eingereicht!", ephemeral: true });
 }
 
 async function handleVote(interaction, direction, suggestionId) {
@@ -50,15 +55,15 @@ async function handleVote(interaction, direction, suggestionId) {
 }
 
 async function handleDecision(interaction, decision, suggestionId) {
-  if (!interaction.member.roles.cache.has(config.vorschlagReviewRoleId)) {
-    return interaction.reply({ content: "Du hast keine Berechtigung dafür.", ephemeral: true });
+  if (!hasAnyRole(interaction.member, config.vorschlagReviewRoleId)) {
+    return interaction.reply({ content: "❌ Du hast keine Berechtigung dafür.", ephemeral: true });
   }
 
   const status = decision === "accept" ? "accepted" : "rejected";
   db.prepare("UPDATE suggestions SET status = ? WHERE id = ?").run(status, suggestionId);
 
   const embed = EmbedBuilder.from(interaction.message.embeds[0])
-    .setColor(decision === "accept" ? 0x2ecc71 : 0xe74c3c)
+    .setColor(decision === "accept" ? FARBEN.erfolg : FARBEN.fehler)
     .setFooter({ text: `Vorschlag #${suggestionId} — Status: ${decision === "accept" ? "Angenommen ✅" : "Abgelehnt ❌"}` });
 
   const row = ActionRowBuilder.from(interaction.message.components[0]);
