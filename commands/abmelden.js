@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const db = require("../db/database");
 const { baseEmbed, FARBEN } = require("../utils/embeds");
-const config = require("../config");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,7 +23,5 @@ module.exports = {
     });
 
     await interaction.reply({ embeds: [embed] });
-    const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);
-    if (logChannel) logChannel.send({ embeds: [embed] }).catch(() => {});
   },
 };
