@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const db = require("../db/database");
 const { baseEmbed, FARBEN } = require("../utils/embeds");
-const config = require("../config");
 
 function formatDauer(ms) {
   const min = Math.floor(ms / 60000);
@@ -40,8 +39,6 @@ module.exports = {
       });
 
       await interaction.reply({ embeds: [embed] });
-      const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);
-      if (logChannel) logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
     if (sub === "ende") {
@@ -65,8 +62,6 @@ module.exports = {
       });
 
       await interaction.reply({ embeds: [embed] });
-      const logChannel = interaction.guild.channels.cache.get(config.teamLogChannelId);
-      if (logChannel) logChannel.send({ embeds: [embed] }).catch(() => {});
     }
   },
 };
