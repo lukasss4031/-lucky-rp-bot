@@ -7,6 +7,13 @@ module.exports = {
   name: "interactionCreate",
   async execute(interaction) {
     try {
+      // --- Autocomplete (z.B. Roblox-Username-Vorschläge) ---
+      if (interaction.isAutocomplete()) {
+        const command = interaction.client.commands.get(interaction.commandName);
+        if (!command || !command.autocomplete) return;
+        return command.autocomplete(interaction);
+      }
+
       // --- Slash-Befehle ---
       if (interaction.isChatInputCommand()) {
         const command = interaction.client.commands.get(interaction.commandName);
@@ -52,3 +59,4 @@ module.exports = {
     }
   },
 };
+
