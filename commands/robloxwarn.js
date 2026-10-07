@@ -9,9 +9,40 @@ module.exports = {
     .setName("robloxwarn")
     .setDescription("Trägt eine Roblox-Verwarnung ein (z.B. Fail-RP).")
     .addStringOption((o) =>
-      o.setName("roblox_username").setDescription("Roblox-Nutzername des Spielers").setRequired(true)
+      o
+        .setName("roblox_username")
+        .setDescription("Roblox-Nutzername des Spielers")
+        .setRequired(true)
+        .setAutocomplete(true)
     )
     .addStringOption((o) => o.setName("grund").setDescription("Grund, z.B. Fail-RP").setRequired(true)),
+
+  // Wird aufgerufen, während der Moderator im roblox_username-Feld tippt.
+  // Fragt die offizielle, kostenlose Roblox-Such-API ab (kein API-Key nötig).
+  async autocomplete(interaction) {
+    const eingabe = interaction.options.getFocused();
+
+    if (!eingabe || eingabe.length < 3) {
+      return interaction.respond([]);
+    }
+
+    try {
+      const res = await fetch(
+        `https://users.roblox.com/v1/users/search?keyword=${encodeURIComponent(eingabe)}&limit=10`
+      );
+      if (!res.ok) return interaction.respond([]);
+
+      const data = await res.json();
+      const vorschlaege = (data.data || [])
+        .slice(0, 25)
+        .map((u) => ({ name: u.name, value: u.name }));
+
+      await interaction.respond(vorschlaege);
+    } catch (err) {
+      console.error("Roblox-Autocomplete fehlgeschlagen:", err.message);
+      await interaction.respond([]).catch(() => {});
+    }
+  },
 
   async execute(interaction) {
     if (!hasAnyRole(interaction.member, config.moderationRoleId)) {
