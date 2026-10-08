@@ -9,8 +9,9 @@ module.exports = {
     if (newState.channelId === config.supportWarteraumChannelId && oldState.channelId !== config.supportWarteraumChannelId) {
       const pingChannel = newState.guild.channels.cache.get(config.supportPingChannelId);
       if (pingChannel) {
+        const pingRollen = [].concat(config.supportPingRoleId).map((id) => `<@&${id}>`).join(" ");
         pingChannel
-          .send(`🔔 ${[].concat(config.supportPingRoleId).map((id) => `<@&${id}>`).join(" ")} — **${newState.member.user.username}** wartet im Support-Warteraum!`)
+          .send(`${pingRollen} im Support-Warteraum wartet ${newState.member}! 🆘`)
           .catch(() => {});
       }
 
