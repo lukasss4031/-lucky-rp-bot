@@ -22,7 +22,7 @@ module.exports = {
   // Textkanal, in dem das Team gepingt wird, wenn jemand im Warteraum ist
   supportPingChannelId: "1551295071461310554",
   // Rolle(n), die bei Support-Anfragen gepingt wird (Array = mehrere Rollen erlaubt)
-  supportPingRoleId: ["1550950817496825867", "1550985124043034726"],
+  supportPingRoleId: ["1557746462765350962"],
 
   // Kategorie, in der neue Ticket-Kanäle erstellt werden
   ticketCategoryId: "1550963611751551026",
