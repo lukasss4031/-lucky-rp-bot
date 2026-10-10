@@ -2,6 +2,8 @@ const { SlashCommandBuilder } = require("discord.js");
 const db = require("../db/database");
 const { baseEmbed, FARBEN } = require("../utils/embeds");
 
+const SHIFT_ROLLE_ID = "1557746462765350962";
+
 function formatDauer(ms) {
   const min = Math.floor(ms / 60000);
   const h = Math.floor(min / 60);
@@ -31,6 +33,10 @@ module.exports = {
 
       db.prepare("INSERT INTO shifts (userId, startedAt) VALUES (?, ?)").run(userId, Date.now());
 
+      await interaction.member.roles.add(SHIFT_ROLLE_ID).catch((err) => {
+        console.error("Konnte Shift-Rolle nicht vergeben:", err.message);
+      });
+
       const embed = baseEmbed(interaction.guild, {
         title: "🟢 Shift gestartet",
         color: FARBEN.erfolg,
@@ -52,6 +58,10 @@ module.exports = {
 
       const endedAt = Date.now();
       db.prepare("UPDATE shifts SET endedAt = ? WHERE id = ?").run(endedAt, laufend.id);
+
+      await interaction.member.roles.remove(SHIFT_ROLLE_ID).catch((err) => {
+        console.error("Konnte Shift-Rolle nicht entfernen:", err.message);
+      });
 
       const embed = baseEmbed(interaction.guild, {
         title: "🔴 Shift beendet",
