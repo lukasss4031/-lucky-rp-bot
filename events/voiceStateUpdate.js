@@ -2,6 +2,10 @@ const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerSta
 const path = require("path");
 const config = require("../config");
 
+// ffmpeg-static liefert nur den Pfad zur Programmdatei - @discordjs/voice muss
+// diesen Pfad kennen, um MP3s zu Opus zu transkodieren.
+process.env.FFMPEG_PATH = require("ffmpeg-static");
+
 module.exports = {
   name: "voiceStateUpdate",
   async execute(oldState, newState) {
@@ -29,6 +33,10 @@ module.exports = {
         });
         player.play(resource);
         connection.subscribe(player);
+
+        player.on("error", (err) => {
+          console.error("Fehler beim Abspielen der Wartemusik:", err.message);
+        });
 
         player.on(AudioPlayerStatus.Idle, () => connection.destroy());
       } catch (err) {
