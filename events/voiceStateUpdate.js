@@ -1,10 +1,31 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior } = require("@discordjs/voice");
+const {
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  AudioPlayerStatus,
+  NoSubscriberBehavior,
+  getVoiceConnection,
+  VoiceConnectionStatus,
+} = require("@discordjs/voice");
 const path = require("path");
 const config = require("../config");
 
 // ffmpeg-static liefert nur den Pfad zur Programmdatei - @discordjs/voice muss
 // diesen Pfad kennen, um MP3s zu Opus zu transkodieren.
 process.env.FFMPEG_PATH = require("ffmpeg-static");
+
+// Zerstört eine Verbindung sicher - verhindert den Absturz "already been destroyed",
+// falls destroy() aus zwei Stellen gleichzeitig ausgelöst wird (z.B. Audio endet
+// UND der Nutzer verlässt den Kanal im selben Moment).
+function sicherZerstoeren(connection) {
+  if (!connection) return;
+  if (connection.state.status === VoiceConnectionStatus.Destroyed) return;
+  try {
+    connection.destroy();
+  } catch (err) {
+    console.error("Konnte Voice-Verbindung nicht sauber schließen:", err.message);
+  }
+}
 
 module.exports = {
   name: "voiceStateUpdate",
@@ -38,7 +59,7 @@ module.exports = {
           console.error("Fehler beim Abspielen der Wartemusik:", err.message);
         });
 
-        player.on(AudioPlayerStatus.Idle, () => connection.destroy());
+        player.on(AudioPlayerStatus.Idle, () => sicherZerstoeren(connection));
       } catch (err) {
         console.error("Konnte Wartemusik nicht abspielen (fehlt assets/warteraum-musik.mp3?):", err.message);
       }
@@ -48,9 +69,7 @@ module.exports = {
     if (oldState.channelId === config.supportWarteraumChannelId) {
       const channel = oldState.guild.channels.cache.get(config.supportWarteraumChannelId);
       if (channel && channel.members.size === 0) {
-        const { getVoiceConnection } = require("@discordjs/voice");
-        const connection = getVoiceConnection(oldState.guild.id);
-        if (connection) connection.destroy();
+        sicherZerstoeren(getVoiceConnection(oldState.guild.id));
       }
     }
   },
